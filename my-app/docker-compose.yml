@@ -1,0 +1,38 @@
+services:
+  nginx:
+    image: nginx:1.20.1
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 8081:80
+    container_name: reverse-proxy
+    depends_on:
+      - person-frontend
+      - person-backend
+
+  person-frontend:
+    image: person-frontend-prod
+    container_name: person-frontend-prod
+    depends_on:
+      - person-backend
+
+  person-backend:
+    image: person-backend-prod
+    container_name: person-backend-prod
+    environment:
+      - MONGO_URL=mongodb://the_username:the_password@mongo:27017/the_database
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+      - MONGO_INITDB_DATABASE=the_database
+    volumes:
+      - ./backend/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./backend/mongo_data:/data/db
+
+volumes:
+  mongo_data:
