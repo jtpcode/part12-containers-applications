@@ -1,0 +1,47 @@
+services:
+  nginx:
+    image: nginx:1.20.1
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 8081:80
+    container_name: reverse-proxy
+    depends_on:
+      - person-frontend-dev
+      - person-backend-dev
+
+  person-frontend-dev:
+    image: person-frontend-dev
+    ports:
+      - 5173:5173
+    container_name: person-frontend-dev
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8081/api
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  person-backend-dev:
+    image: person-backend-dev
+    ports:
+      - 3000:3000
+    container_name: person-backend-dev
+    environment:
+      - MONGO_URL=mongodb://the_username:the_password@mongo:27017/the_database
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    ports:
+      - 3456:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+      - MONGO_INITDB_DATABASE=the_database
+    volumes:
+      - ./backend/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./backend/mongo_data:/data/db
